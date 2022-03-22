@@ -1,6 +1,6 @@
 // our-domain.com/new-meetup
 import { useRouter } from 'next/router';
-import Head from 'react/next';
+import Head from 'next/head';
 import { Fragment } from 'react';
 import NewMeetupForm from '../../components/meetups/NewMeetupForm';
 
