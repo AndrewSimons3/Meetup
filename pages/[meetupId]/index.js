@@ -1,47 +1,75 @@
-import { Fragment } from "react";
-import { getStaticProps } from "..";
+import { MongoClient, ObjectId } from 'mongodb';
+import Head from 'next/head';
+import { Fragment } from 'react';
+
 import MeetupDetail from '../../components/meetups/MeetupDetail';
 
-function MeetupDetails() {
-  return (
-		<MeetupDetail
-			image='https://xixerone.com/en/wp-content/uploads/sites/2/2020/12/Where-to-Stay-in-Austin-TX-Best-Areas-Hotels-1600x1067.jpg'
-			title='First Meetup'
-			address='Some Street  5, some  City'
-			description='This is our first  meetup'
-		/>
+
+function MeetupDetails(props) {
+	return (
+		<Fragment>
+			<Head>
+				<title>{props.meetupData.title}</title>
+				<meta name="description" content={props.meetupData.description}/>
+			</Head>
+			<MeetupDetail
+				image={props.meetupData.image}
+				title={props.meetupData.title}
+				address={props.meetupData.address}
+				description={props.meetupData.description}
+			/>
+		</Fragment>
 	);
 }
 
 export async function getStaticPaths() {
+
+		const client = await MongoClient.connect(
+			'mongodb+srv://Simdrew07:MOS2Y0xqd9oD2vmk@cluster0.liswm.mongodb.net/meetups?retryWrites=true&w=majority'
+		);
+		const db = client.db();
+
+	const meetupsCollection = db.collection('meetups');
+
+	const meetups = await meetupsCollection.find({}, { _id: 1 }).toArray();
+	
+	client.close();
+	
 	return {
-		paths: [
-			{
-				params: {
-				meetupId: 'm1',
-			}}
-		]
-	}
+		fallback: false,
+		paths: meetups.map(meetup => ({
+			params: { meetupId: meetup._id.toString() },
+		})),
+	};
 }
 
 export async function getStaticProps(context) {
-	//fetch data for a single meetup
+	// fetch data for a single meetup
 
 	const meetupId = context.params.meetupId;
 
-	console.log(meetupId);
+		const client = await MongoClient.connect(
+			'mongodb+srv://Simdrew07:MOS2Y0xqd9oD2vmk@cluster0.liswm.mongodb.net/meetups?retryWrites=true&w=majority'
+		);
+		const db = client.db();
 
+		const meetupsCollection = db.collection('meetups');
+
+	const selectedMeetup = meetupsCollection.findOne({_id: ObjectId(meetupId)});
+
+	client.close();
+	
 	return {
 		props: {
 			meetupData: {
-				image: 'https://xixerone.com/en/wp-content/uploads/sites/2/2020/12/Where-to-Stay-in-Austin-TX-Best-Areas-Hotels-1600x1067.jpg',
-				id: meetupId,
-				title: 'First Meetup',
-				address: 'Some Street 5, Some City',
-				description: 'This is a first meetup'
+				id: selectedMeetup._id.toString(),
+				title: selectedMeetup.title,
+				address: selectedMeetup.address,
+				image: selectedMeetup.image,
+				description: selectedMeetup.description
 			}
-		}
+		},
+	};
 	}
-}
 
 export default MeetupDetails;
